@@ -1,0 +1,29 @@
+# AMS + DICM Simplified Pseudocode
+
+# 1. Server Side (AMS)
+For each server node:
+    - Store a shard of image data: {image_id: image_tensor}
+    - Define a shared embedding model (e.g., CNN or FC network)
+    - On request:
+        -> Embed image: image_id -> embedding vector (e.g., 12-D)
+        -> Send embedding to the requesting worker
+    - On gradient received:
+        -> Backprop through the embedding model
+        -> Update parameters globally
+
+# 2. Worker Side (CTR Model)
+For each worker node:
+    - Read a minibatch of training samples
+    - Each sample includes:
+        * ad image id
+        * user behavior image ids
+        * ID features (ad/user/context)
+    - For each image id:
+        -> Request image embedding from server
+    - Apply MultiQuery Attention:
+        * Query: ad image embedding, ad ID embedding
+        * Keys/Values: user behavior image embeddings / ID embeddings
+        * Get two weighted sums → concatenate → user vector
+    - Combine with ad features, pass to MLP
+    - Compute CTR prediction and loss
+    - Backprop gradients to embedding and ID features
